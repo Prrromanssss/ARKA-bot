@@ -28,6 +28,16 @@ async def get_commands(message):
 
 @bot.message_handler(commands=['admin'])
 async def admin_command(message):
+    try:
+        del flags_for_names[message.chat.id]
+    except KeyError:
+        pass
+    try:
+        username, name = models.db_object.db_select_user(callback.message)
+    except:
+        text = msg_text.reg_user.forgot_user()
+        await bot.send_message(callback.message.chat.id, text)
+        return
     text = msg_text.admin.write_down_password()
     msg_text.admin.admin_password_flag[message.chat.id] = True
     await bot.send_message(message.chat.id, text)
@@ -208,7 +218,8 @@ async def products(message):
         text = msg_text.reg_user.products(name)
     except Exception:
         text = msg_text.reg_user.forgot_user()
-        await bot.send_message(message.chat.id, text)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        await bot.send_message(message.chat.id, text, reply_markup=markup)
         return
     markup = types.InlineKeyboardMarkup(row_width=3)
     if message.text == 'Далее':
@@ -239,7 +250,12 @@ async def group_A(callback):
     text = eval(f'msg_text.group_a.{callback.data.lower().split("__")[0] if "__" in callback.data else callback.data.lower().split("_")[0]}()')
     markup = types.InlineKeyboardMarkup()
     if 'A1' in callback.data:
-        username, name = models.db_object.db_select_user(callback.message)
+        try:
+            username, name = models.db_object.db_select_user(callback.message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(callback.message.chat.id, text)
+            return
 
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                               f'Юзернейм: @{username}\n' \
@@ -320,7 +336,12 @@ async def group_B(callback):
     markup = types.InlineKeyboardMarkup()
     if 'B1' in callback.data:
         text = msg_text.group_b.b1()
-        username, name = models.db_object.db_select_user(callback.message)
+        try:
+            username, name = models.db_object.db_select_user(callback.message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(callback.message.chat.id, text)
+            return
 
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                           f'Юзернейм: @{username}\n' \
@@ -383,7 +404,12 @@ async def group_C(callback):
     markup = types.InlineKeyboardMarkup()
     if 'C1' in callback.data and len(callback.data) == 2:
         text = msg_text.group_c.c1()
-        username, name = models.db_object.db_select_user(callback.message)
+        try:
+            username, name = models.db_object.db_select_user(callback.message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(callback.message.chat.id, text)
+            return
 
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                               f'Юзернейм: @{username}\n' \
@@ -442,7 +468,12 @@ async def group_D(callback):
     if 'D1' in callback.data and 'radio' not in callback.data:
 
         text = msg_text.group_d.d1()
-        username, name = models.db_object.db_select_user(callback.message)
+        try:
+            username, name = models.db_object.db_select_user(callback.message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(callback.message.chat.id, text)
+            return
 
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                           f'Юзернейм: @{username}\n' \
@@ -532,7 +563,12 @@ async def group_D(callback):
 
 @bot.callback_query_handler(func=lambda callback: 'E' in callback.data and 'last' not in callback.data)
 async def group_E(callback):
-
+    try:
+        username, name = models.db_object.db_select_user(callback.message)
+    except:
+        text = msg_text.reg_user.forgot_user()
+        await bot.send_message(callback.message.chat.id, text)
+        return
     text = eval(f'msg_text.group_e.{callback.data.lower().split("_")[-1]}()') if 'radio' not in callback.data else msg_text.group_e.e1()
     markup = types.InlineKeyboardMarkup()
     msg_text.reg_user.flag_for_list_polls[callback.message.chat.id] = True
