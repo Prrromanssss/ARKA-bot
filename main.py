@@ -197,8 +197,8 @@ async def contact(message):
 
 async def products(message):
     try:
-        name = models.db_object.db_select_user(message)
-        print(name)
+        name = models.db_object.db_select_user(message)[1]
+
         text = msg_text.reg_user.products(name)
     except Exception:
         text = msg_text.reg_user.forgot_user()
