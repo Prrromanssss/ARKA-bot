@@ -3,18 +3,12 @@ import config
 import telebot.async_telebot
 import message as msg_text
 from telebot import types
+import models
 
 
 bot = telebot.async_telebot.AsyncTeleBot(config.API_TOKEN)
-flags_for_names = {}  # There is not register_nest_step_handler
-                      # in async_telebot, that's why such crutch
-'''DB'''
-names = {}
-usernames = {}
-
+flags_for_names = {}  # There is not register_next_step_handler in async_telebot, that's why such crutch
 msg_for_delete = {}
-
-
 
 
 def clear_admin_password_flag(message):
@@ -44,8 +38,7 @@ async def admin_command(message):
 async def get_text_msg(message):
     if flags_for_names.get(message.chat.id):
         del flags_for_names[message.chat.id]
-        names[message.chat.id] = message.text
-        usernames[message.chat.id] = message.from_user.username
+        models.db_object.db_insert(message, message.text)
         clear_admin_password_flag(message)
         await products(message)
     elif message.text == 'Портфолио':
@@ -105,7 +98,8 @@ async def get_text_msg(message):
 
                 await bot.send_message(message.chat.id, txt_bad_choice)
         if not msg_text.reg_user.list_of_polls.get(message.chat.id):
-            text = msg_text.group_last.last_buy(message.chat.id, names)
+            name = models.db_object.db_select_user(message)[1]
+            text = msg_text.group_last.last_buy(message.chat.id, name)
             await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.main_pol.get(message.chat.id))
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add(types.KeyboardButton(text='Портфолио'))
@@ -129,7 +123,8 @@ async def get_text_msg(message):
     elif msg_text.reg_user.flag_for_last2.get(message.chat.id) and not msg_text.reg_user.flag_for_list_polls.get(message.chat.id):
         await bot.send_message(message.chat.id, f'Вы хотите приступить: {message.text}')
         msg_text.reg_user.polls[message.chat.id] += f'Вы хотите приступить: {message.text}\n'
-        text = msg_text.group_last.last_buy(message.chat.id, names)
+        name = models.db_object.db_select_user(message)[1]
+        text = msg_text.group_last.last_buy(message.chat.id, name)
         await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.polls.get(message.chat.id))
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Портфолио'))
@@ -143,7 +138,9 @@ async def get_text_msg(message):
         if message.text == config.admin_password:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add(types.KeyboardButton(text='<< Назад'))
-            text = msg_text.admin.start(names[message.chat.id])
+            name = models.db_object.db_select_user(message)[1]
+
+            text = msg_text.admin.start(name)
             clear_admin_password_flag(message)
             msg_text.admin.admin_stop_msg[message.chat.id] = True
             await bot.send_message(message.chat.id, text, reply_markup=markup)
@@ -162,8 +159,9 @@ async def get_text_msg(message):
 @bot.message_handler(content_types=config.CONTENT_TYPES)
 async def newsletter(message):
     if msg_text.admin.admin_stop_msg.get(message.chat.id):
+        names = models.db_object.db_select_all_users_id()
         for user in names:
-            await bot.forward_message(user, message.chat.id, message.message_id)
+            await bot.forward_message(user[0], message.chat.id, message.message_id)
 
 
 async def channel(message):
@@ -199,7 +197,9 @@ async def contact(message):
 
 async def products(message):
     try:
-        text = msg_text.reg_user.products(names[message.chat.id])
+        name = models.db_object.db_select_user(message)[1]
+
+        text = msg_text.reg_user.products(name)
     except KeyError:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(message.chat.id, text)
@@ -232,8 +232,10 @@ async def group_A(callback):
     text = eval(f'msg_text.group_a.{callback.data.lower().split("__")[0] if "__" in callback.data else callback.data.lower().split("_")[0]}()')
     markup = types.InlineKeyboardMarkup()
     if 'A1' in callback.data:
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {names[callback.message.chat.id]}\n' \
-                                              f'Юзернейм: @{usernames[callback.message.chat.id]}\n' \
+        username, name = models.db_object.db_select_user(callback.message)
+
+        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
+                                              f'Юзернейм: @{username}\n' \
                                               f'Что интересует: Печь для отопления дома\n'
 
         markup.add(types.InlineKeyboardButton(text='одной', callback_data='A2__1'))
@@ -311,8 +313,10 @@ async def group_B(callback):
     markup = types.InlineKeyboardMarkup()
     if 'B1' in callback.data:
         text = msg_text.group_b.b1()
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {names[callback.message.chat.id]}\n' \
-                                          f'Юзернейм: @{usernames[callback.message.chat.id]}\n' \
+        username, name = models.db_object.db_select_user(callback.message)
+
+        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
+                                          f'Юзернейм: @{username}\n' \
                                           f'Что интересует: Печь для бани\n'
         markup.add(types.InlineKeyboardButton(text=f'1', callback_data=f'B2'))
         markup.add(types.InlineKeyboardButton(text=f'2', callback_data=f'B3'))
@@ -372,8 +376,10 @@ async def group_C(callback):
     markup = types.InlineKeyboardMarkup()
     if 'C1' in callback.data and len(callback.data) == 2:
         text = msg_text.group_c.c1()
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {names[callback.message.chat.id]}\n' \
-                                              f'Юзернейм: @{usernames[callback.message.chat.id]}\n' \
+        username, name = models.db_object.db_select_user(callback.message)
+
+        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
+                                              f'Юзернейм: @{username}\n' \
                                               f'Что интересует: Камин\n'
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
@@ -429,8 +435,10 @@ async def group_D(callback):
     if 'D1' in callback.data and 'radio' not in callback.data:
 
         text = msg_text.group_d.d1()
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {names[callback.message.chat.id]}\n' \
-                                          f'Юзернейм: @{usernames[callback.message.chat.id]}\n' \
+        username, name = models.db_object.db_select_user(callback.message)
+
+        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
+                                          f'Юзернейм: @{username}\n' \
                                           f'Что интересует: Комплекс барбекю\n'
         foci = ['мангал', 'печь казана', 'тандыр', 'русская печь',
                 'хлебная печь (духовка)', 'помпейская печь (пицца-печь)',
@@ -578,9 +586,10 @@ async def group_last(callback):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Далее'))
     elif 'F' in callback.data:
+        username, name = models.db_object.db_select_user(callback.message)
 
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {names[callback.message.chat.id]}\n' \
-                                          f'Юзернейм: @{usernames[callback.message.chat.id]}\n' \
+        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
+                                          f'Юзернейм: @{username}\n' \
                                           f'Что интересует: Другое\n'
     msg_text.reg_user.flag_for_last1[callback.message.chat.id] = True
     if 'E' not in callback.data:

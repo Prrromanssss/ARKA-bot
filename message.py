@@ -201,8 +201,8 @@ class LastGroup:
         text = 'Когда Вы планируете приступить к строительству печи?'
         return text
 
-    def last_buy(self, chat_id, names):
-        text = f'Большое спасибо Вам за обращение, {names[chat_id]}, в скором времени мы с вами свяжемся. '
+    def last_buy(self, name):
+        text = f'Большое спасибо Вам за обращение, {name}, в скором времени мы с вами свяжемся. '
         return text
 
 
