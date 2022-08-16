@@ -173,7 +173,7 @@ async def newsletter(message):
 async def channel(message):
     text = msg_text.reg_user.channel()
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(text='Перейти', url='https://t.me/arka_pechi'))
+    markup.add(types.InlineKeyboardButton(text='Перейти', url=config.CHANNEL_URL))
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
 
 
@@ -209,6 +209,7 @@ async def products(message):
     except Exception:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(message.chat.id, text)
+        return
     markup = types.InlineKeyboardMarkup(row_width=3)
     if message.text == 'Далее':
         text += f'\nВам осталось выбрать: {", ".join(msg_text.reg_user.list_of_polls.get(message.chat.id))}'
