@@ -1,6 +1,6 @@
 '''All configuration data needed in bot'''
 
-API_TOKEN = '5467464219:AAFWYtxHFm25uo7ymAEZxxSu1tI3YsTWUdE'
+API_TOKEN = '5343551149:AAE2d0n1U8U-Q1vEOHDemQfW5xK5xyjwpEI'
 SITE_URL = 'http://arka-pechi.ru/'
 STOVE_URL = 'https://t.me/+8xk3vH5YSuoxOWMy'
 BARBECUE_URL = 'https://t.me/+NhMVJp9xHSo2NDdi'
