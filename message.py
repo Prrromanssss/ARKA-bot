@@ -8,6 +8,10 @@ class BaseMessages(abc.ABC):
 
 
 class AdminUser(BaseMessages):
+    def __init__(self):
+        self.admin_password_flag = {}
+        self.admin_stop_msg = {}
+
     def start(self, name=None):
         text = f'Добро пожаловать, {name}. Вы вошли в аккаунт администратора\n' \
                f'Вы можете создать рассылки для всех пользователей, присылая нам медиафайлы, текст и другие сообщения.\n' \
@@ -18,12 +22,25 @@ class AdminUser(BaseMessages):
         text = f'Пароль введен неверно, попробуйте еще раз'
         return text
 
+    def write_down_password(self):
+        text = 'Введите пароль, чтобы войти в качестве админа\n'
+        return text
+
 
 class RegularUser(BaseMessages):
+    def __init__(self):
+        self.flag_for_last1, self.flag_for_last2, self.polls = {}, {}, {}
+        self.list_of_polls, self.flag_for_list_polls, self.main_pol = {}, {}, {}
+
     def start(self, name=None):
         text = f'Здравствуйте, это электронный помощник Артели печников «АРКА».' \
                f' Мы базируемся в г. Сергиев Посад Московской области и профессионально занимаемся строительством' \
                f' печей, каминов и комплексов барбекю из кирпича. Как Вас зовут?'
+        return text
+
+    def forgot_user(self):
+        text = 'Мы вас забыли, такое могло случиться, если бот был перезапущен\n' \
+               'Нажмите кнопку "/start" и авторизируйтесь снова!'
         return text
 
     def unknown(self):
@@ -52,6 +69,11 @@ class RegularUser(BaseMessages):
     def site(self):
         text = f'Ознакомьтесь с нашим сайтом. На нем представлено больше информации'
         return text
+
+    def answers(self):
+        text = 'Если у вас возникли вопросы, внизу появились кнопки - воспользуйтесь ими '
+        return text
+
 
 class AGroup:
     def a1(self):
@@ -129,6 +151,9 @@ class CGroup:
 
 
 class DGroup:
+    def __init__(self):
+        self.focies = {}
+
     def d1(self):
         text = 'Какие очаги и элементы Вы выбираете? \n' \
                 'Ваш выбор: '
@@ -152,10 +177,18 @@ class DGroup:
         return text
 
 
-
 class EGroup:
     def e1(self):
         text = 'Мне нужны: '
+        return text
+
+    def another_btn_chosen(self):
+        text = 'Данная категория не была добавлена к заказу.\nДля того, чтобы выбрать сразу несколько категорий,' \
+                                 'нажмите кнопку "Несколько печей"'
+        return text
+
+    def not_all_filled(self):
+        text = 'Вы заполнили не все заказы, нажмите "Далеe", чтобы закончить'
         return text
 
 
@@ -171,3 +204,13 @@ class LastGroup:
     def last_buy(self, chat_id, names):
         text = f'Большое спасибо Вам за обращение, {names[chat_id]}, в скором времени мы с вами свяжемся. '
         return text
+
+
+admin = AdminUser()
+reg_user = RegularUser()
+group_a = AGroup()
+group_b = BGroup()
+group_c = CGroup()
+group_d = DGroup()
+group_e = EGroup()
+group_last = LastGroup()
