@@ -632,8 +632,12 @@ async def group_last(callback):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Далее'))
     elif 'F' in callback.data:
-        username, name = models.db_object.db_select_user(callback.message)
-
+        try:
+            username, name = models.db_object.db_select_user(callback.message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(callback.message.chat.id, text)
+            return
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                           f'Юзернейм: @{username}\n' \
                                           f'Что интересует: Другое\n'
