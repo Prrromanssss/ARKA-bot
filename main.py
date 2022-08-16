@@ -33,10 +33,10 @@ async def admin_command(message):
     except KeyError:
         pass
     try:
-        username, name = models.db_object.db_select_user(callback.message)
+        username, name = models.db_object.db_select_user(message)
     except:
         text = msg_text.reg_user.forgot_user()
-        await bot.send_message(callback.message.chat.id, text)
+        await bot.send_message(message.chat.id, text)
         return
     text = msg_text.admin.write_down_password()
     msg_text.admin.admin_password_flag[message.chat.id] = True
