@@ -197,10 +197,10 @@ async def contact(message):
 
 async def products(message):
     try:
-        name = models.db_object.db_select_user(message)[1]
-
+        name = models.db_object.db_select_user(message)
+        print(name)
         text = msg_text.reg_user.products(name)
-    except KeyError:
+    except Exception:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(message.chat.id, text)
     markup = types.InlineKeyboardMarkup(row_width=3)
