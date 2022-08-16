@@ -63,8 +63,14 @@ async def get_text_msg(message):
             del msg_text.reg_user.flag_for_list_polls[message.chat.id]
         except KeyError:
             pass
-        del msg_text.reg_user.list_of_polls[message.chat.id]
-        del msg_text.reg_user.main_pol[message.chat.id]
+        try:
+            del msg_text.reg_user.list_of_polls[message.chat.id]
+        except KeyError:
+            pass
+        try:
+            del msg_text.reg_user.main_pol[message.chat.id]
+        except KeyError:
+            pass
         await products(message)
     elif message.text == 'Далее':
         try:
@@ -472,7 +478,10 @@ async def group_D(callback):
     elif 'D2' in callback.data:
         text = msg_text.group_d.d2()
         pol_text = ', '.join(msg_text.group_d.focies.get(callback.message.chat.id))
-        del msg_text.group_d.focies[callback.message.chat.id]
+        try:
+            del msg_text.group_d.focies[callback.message.chat.id]
+        except KeyError:
+            pass
         msg_text.reg_user.polls[callback.message.chat.id] += f'Какие очаги и элементы Вы выбираете: {pol_text}\n'
 
         markup.add(types.InlineKeyboardButton(text='отдельная беседка', callback_data='d31'))
