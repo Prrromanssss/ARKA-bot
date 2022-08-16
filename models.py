@@ -24,11 +24,14 @@ class UserData:
         conn = psycopg2.connect(self.name, sslmode='require')
         cursor = conn.cursor()
         val = (message.chat.id, )
-        sql_query = f'SELECT ("username", "user_name") FROM {config.DB_TABLE} WHERE user_id = %s'
+        sql_query = f'SELECT "user_name" FROM {config.DB_TABLE} WHERE user_id = %s'
         cursor.execute(sql_query, val)
-        username = cursor.fetchall()[0]
+        user_name = cursor.fetchall()[0][0]
+        sql_query = f'SELECT "username" FROM {config.DB_TABLE} WHERE user_id = %s'
+        cursor.execute(sql_query, val)
+        username = cursor.fetchall()[0][0]
         conn.commit()
-        return username
+        return username, user_name
 
     def db_select_all_users_id(self):
         conn = psycopg2.connect(self.name, sslmode='require')
