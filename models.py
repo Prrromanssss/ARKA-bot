@@ -6,16 +6,17 @@ class UserData:
     def __init__(self, name):
         self.name = name
 
-    def db_insert(self, message, name):
+    def db_insert(self, message):
         conn = psycopg2.connect(self.name, sslmode='require')
         cursor = conn.cursor()
         username = message.from_user.username
-        val = (message.chat.id, username, name)
-        sql_query = f'SELECT username FROM {config.DB_TABLE}'
-        cursor.execute(sql_query)
+        val = (username, message.chat.id)
+        sql_query = f'SELECT username FROM {config.DB_TABLE} WHERE user_id = %s'
+        cursor.execute(sql_query, (message.chat.id,))
+
         if cursor.fetchall():
             return
-        sql_query = f'INSERT INTO {config.DB_TABLE} ("user_id", "username", "user_name") VALUES (%s, %s, %s)'
+        sql_query = f'INSERT INTO {config.DB_TABLE} ("username", user_id) VALUES (%s, %s)'
         cursor.execute(sql_query, val)
         conn.commit()
 
