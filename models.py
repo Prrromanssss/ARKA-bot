@@ -10,7 +10,7 @@ class UserData:
         conn = psycopg2.connect(self.name, sslmode='require')
         cursor = conn.cursor()
         username = message.from_user.username
-        val = (username, message.chat.id, name)
+        val = (message.chat.id, username, name)
         sql_query = f'SELECT username FROM {config.DB_TABLE} WHERE user_id = %s'
         cursor.execute(sql_query, (message.chat.id,))
         if cursor.fetchall():
