@@ -51,18 +51,27 @@ async def get_text_msg(message):
         models.db_object.db_insert(message, message.text)
         clear_admin_password_flag(message)
         await products(message)
+
     elif message.text == 'Портфолио':
         clear_admin_password_flag(message)
+
         await portfolio(message)
+
     elif message.text == 'Наш сайт':
         clear_admin_password_flag(message)
+
         await site(message)
+
     elif message.text == 'Связаться с нами':
         clear_admin_password_flag(message)
+
         await contact(message)
+
     elif message.text == 'Наш канал':
         clear_admin_password_flag(message)
+
         await channel(message)
+
     elif message.text in ['<< Назад', 'Опросник']:
         try:
             del msg_text.admin.admin_stop_msg[message.chat.id]
@@ -81,42 +90,65 @@ async def get_text_msg(message):
             del msg_text.reg_user.main_pol[message.chat.id]
         except KeyError:
             pass
+        try:
+            del msg_text.reg_user.flag_support[message.chat.id]
+        except KeyError:
+            pass
         await products(message)
-    elif message.text == 'Далее':
+
+
+    elif message.text == 'Далее' and not msg_text.reg_user.flag_support.get(message.chat.id):
+        clear_admin_password_flag(message)
         try:
             del msg_text.admin.admin_stop_msg[message.chat.id]
         except KeyError:
             pass
-        clear_admin_password_flag(message)
         await products(message)
-    elif msg_text.reg_user.flag_for_last1.get(message.chat.id):
 
-        await bot.send_message(message.chat.id, f'Ваше место: {message.text}')
+    elif msg_text.reg_user.flag_support.get(message.chat.id):
+        if message.text != 'Далее':
+            if 'Нужна консультация печника:' in msg_text.reg_user.polls[message.chat.id]:
+                msg_text.reg_user.polls[message.chat.id] += f'\nНужна консультация печника: {message.text}'
+            else:
+                msg_text.reg_user.polls[message.chat.id] += f'\n{message.text}'
+        else:
+            try:
+                username, name = models.db_object.db_select_user(message)
+            except:
+                text = msg_text.reg_user.forgot_user()
+                await bot.send_message(message.chat.id, text)
+                return
+            text = msg_text.LastGroup().last_buy(name)
+            await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.polls.get(message.chat.id))
+            await bot.send_message(chat_id=message.chat.id, text=text)
+            del msg_text.reg_user.flag_support[message.chat.id]
+            msg_text.reg_user.flag_support[message.chat.id] = True
+            await products(message)
+
+    elif msg_text.reg_user.flag_for_last1.get(message.chat.id):
         msg_text.reg_user.polls[message.chat.id] += f'Место: {message.text}\n'
         text = msg_text.group_last.last_2()
         await bot.send_message(message.chat.id, text)
-        msg_text.reg_user.flag_for_last2[message.chat.id] = True
         del msg_text.reg_user.flag_for_last1[message.chat.id]
+        msg_text.reg_user.flag_for_last2[message.chat.id] = True
+
+
     elif msg_text.reg_user.flag_for_last2.get(message.chat.id) and msg_text.reg_user.flag_for_list_polls.get(message.chat.id):
-        await bot.send_message(message.chat.id, f'Вы хотите приступить: {message.text}')
         msg_text.reg_user.polls[message.chat.id] += f'Вы хотите приступить: {message.text}\n\n'
         flag_to_continue = True
         if msg_text.reg_user.list_of_polls.get(message.chat.id):
-
             msg_text.reg_user.main_pol[message.chat.id] = msg_text.reg_user.main_pol.get(message.chat.id, '')\
                                                           + '\n' + msg_text.reg_user.polls.get(message.chat.id)
-
             try:
                 msg_text.reg_user.list_of_polls[message.chat.id].remove(''.join(msg_text.reg_user.polls[message.chat.id].split('\n')[2]).split(':')[-1].strip())
             except Exception:
                 flag_to_continue = False
                 txt_bad_choice = msg_text.group_e.another_btn_chosen()
-
                 await bot.send_message(message.chat.id, txt_bad_choice)
         if not msg_text.reg_user.list_of_polls.get(message.chat.id):
             name = models.db_object.db_select_user(message)[1]
             text = msg_text.group_last.last_buy(name)
-            await bot.send_message(config.chat_to_poll['arka_pechnik'], msg_text.reg_user.main_pol.get(message.chat.id))
+            await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.main_pol.get(message.chat.id))
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add(types.KeyboardButton(text='Портфолио'))
             markup.add(types.KeyboardButton(text='Наш канал'))
@@ -136,12 +168,18 @@ async def get_text_msg(message):
                 await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode='html')
 
         del msg_text.reg_user.flag_for_last2[message.chat.id]
+
     elif msg_text.reg_user.flag_for_last2.get(message.chat.id) and not msg_text.reg_user.flag_for_list_polls.get(message.chat.id):
-        await bot.send_message(message.chat.id, f'Вы хотите приступить: {message.text}')
         msg_text.reg_user.polls[message.chat.id] += f'Вы хотите приступить: {message.text}\n'
-        name = models.db_object.db_select_user(message)[1]
+        try:
+            username, name = models.db_object.db_select_user(message)
+        except:
+            text = msg_text.reg_user.forgot_user()
+            await bot.send_message(message.chat.id, text)
+            return
         text = msg_text.group_last.last_buy(name)
-        await bot.send_message(config.chat_to_poll['arka_pechnik'], msg_text.reg_user.polls.get(message.chat.id))
+        await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.polls.get(message.chat.id))
+
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Портфолио'))
         markup.add(types.KeyboardButton(text='Наш канал'))
@@ -150,12 +188,12 @@ async def get_text_msg(message):
         markup.add(types.KeyboardButton(text='<< Назад'))
         await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode='html')
         del msg_text.reg_user.flag_for_last2[message.chat.id]
+
     elif msg_text.admin.admin_password_flag.get(message.chat.id):
         if message.text == config.admin_password:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add(types.KeyboardButton(text='<< Назад'))
             name = models.db_object.db_select_user(message)[1]
-
             text = msg_text.admin.start(name)
             clear_admin_password_flag(message)
             msg_text.admin.admin_stop_msg[message.chat.id] = True
@@ -163,13 +201,18 @@ async def get_text_msg(message):
         else:
             text = msg_text.admin.password_false()
             await bot.send_message(message.chat.id, text)
+
+
     elif msg_text.admin.admin_stop_msg.get(message.chat.id):
         await newsletter(message)
+
     else:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(text='Опросник', callback_data='Questionnaire'))
-        text = msg_text.reg_user.unknown()
+        name = models.db_object.db_select_user(message)[-1]
+        text = msg_text.reg_user.unknown(name)
         await bot.send_message(message.chat.id, text, reply_markup=markup)
+
 
 
 @bot.message_handler(content_types=config.CONTENT_TYPES)
@@ -207,8 +250,8 @@ async def portfolio(message):
 
 
 async def contact(message):
-    text = msg_text.reg_user.contact()
-    await bot.send_message(message.chat.id, text=text)
+    await bot.send_contact(chat_id=message.chat.id, phone_number='+79260539539',
+                           first_name='Алексей', last_name='Мадянов')
 
 
 async def products(message):
@@ -222,14 +265,17 @@ async def products(message):
         await bot.send_message(message.chat.id, text, reply_markup=markup)
         return
     markup = types.InlineKeyboardMarkup(row_width=3)
-    if message.text == 'Далее':
+    if message.text == 'Далее' and not msg_text.reg_user.flag_support.get(message.chat.id):
         text += f'\nВам осталось выбрать: {", ".join(msg_text.reg_user.list_of_polls.get(message.chat.id))}'
     markup.add(types.InlineKeyboardButton(text='Печь для отопления дома', callback_data='A1'))
     markup.add(types.InlineKeyboardButton(text='Печь для бани', callback_data='B1'))
     markup.add(types.InlineKeyboardButton(text='Камин', callback_data='C1'))
     markup.add(types.InlineKeyboardButton(text='Комплекс барбекю', callback_data='D1'))
-    markup.add(types.InlineKeyboardButton(text='Несколько печей', callback_data='E1'))
-    markup.add(types.InlineKeyboardButton(text='Другое', callback_data='F_last'))
+    if message.text != 'Далее' or msg_text.reg_user.flag_support.get(message.chat.id):
+        markup.add(types.InlineKeyboardButton(text='Несколько печей', callback_data='E1'))
+        markup.add(types.InlineKeyboardButton(text='Нужна консультация печника', callback_data='F_last'))
+    else:
+        markup.add(types.InlineKeyboardButton(text='Другое', callback_data='F_last'))
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
     text = msg_text.reg_user.answers()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -240,6 +286,7 @@ async def products(message):
     markup.add(types.KeyboardButton(text='<< Назад'))
     msg = await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode='html')
     msg_for_delete[message.chat.id] = msg
+
 
 
 '''Callback handlers'''
@@ -305,14 +352,17 @@ async def group_A(callback):
                    '7': 'русская печь с подтопком', '8': 'с пристроенным камином', '9': 'каминопечь',
                    '10': 'пока не выбрали, посоветуйте.'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Вид и функционал: {pol_txt[callback.data.split("__")[-1]]}\n'
-        markup.add(types.InlineKeyboardButton(text='основной источник тепла, проживаем в доме постоянно',
+        markup.add(types.InlineKeyboardButton(text='основной источник тепла, дом для постоянного проживания',
                                               callback_data='A5__1'))
-        markup.add(types.InlineKeyboardButton(text='резервный источник тепла', callback_data='A5__2'))
-        markup.add(types.InlineKeyboardButton(text='это дача, жить постоянно здесь не планируем.', callback_data='A5__3'))
+        markup.add(types.InlineKeyboardButton(text='резервный источник тепла, дом для постоянного проживания',
+                                              callback_data='A5__2'))
+        markup.add(types.InlineKeyboardButton(text='это дача, жить постоянно здесь не планируем', callback_data='A5__3'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'A5' in callback.data:
-        pol_txt = {'1': 'основной источник тепла, проживаем в доме постоянно', '2': 'резервный источник тепла', '3': 'это дача, жить постоянно здесь не планируем.'}
+        pol_txt = {'1': 'основной источник тепла, дом для постоянного проживания',
+                   '2': 'резервный источник тепла, дом для постоянного проживания',
+                   '3': 'это дача, жить постоянно здесь не планируем'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Печь нужна как: {pol_txt[callback.data.split("__")[-1]]}\n'
         markup.add(types.InlineKeyboardButton(text='да', callback_data='A6__1'))
         markup.add(types.InlineKeyboardButton(text='пока нет, но строительство уже начато', callback_data='A6__2'))
@@ -332,7 +382,6 @@ async def group_A(callback):
 
 @bot.callback_query_handler(func=lambda callback: 'B' in callback.data and 'last' not in callback.data)
 async def group_B(callback):
-
     markup = types.InlineKeyboardMarkup()
     if 'B1' in callback.data:
         text = msg_text.group_b.b1()
@@ -344,26 +393,18 @@ async def group_B(callback):
             return
 
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                          f'Юзернейм: @{username}\n' \
-                                          f'Что интересует: Печь для бани\n'
+                                                            f'Юзернейм: @{username}\n' \
+                                                            f'Что интересует: Печь для бани\n'
         markup.add(types.InlineKeyboardButton(text=f'1', callback_data=f'B2'))
         markup.add(types.InlineKeyboardButton(text=f'2', callback_data=f'B3'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'B2' in callback.data or 'B3' in callback.data:
-        text = msg_text.group_b.b2()
+        text = msg_text.group_b.b3()
         if callback.data == 'B2':
             msg_text.reg_user.polls[callback.message.chat.id] += f'Печь: Кирпичная печь-каменка с закладкой из чугуна – классика русской бани. \n'
         elif callback.data == 'B3':
             msg_text.reg_user.polls[callback.message.chat.id] += f'Печь: Металлическая печь, совмещённая с отопительным щитком из кирпича \n'
-        markup.add(types.InlineKeyboardButton(text='домашняя баня', callback_data='B4'))
-        markup.add(types.InlineKeyboardButton(text='общественная баня.', callback_data='B5'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
-    elif 'B4' in callback.data or 'B5' in callback.data:
-        text = msg_text.group_b.b3()
-        pol_txt = {'B4': 'домашняя баня', 'B5': 'общественная баня.'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Тип бани: {pol_txt[callback.data]}\n'
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'B6_1{i}'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -490,19 +531,18 @@ async def group_D(callback):
         foci = ['мангал', 'печь казана', 'тандыр', 'русская печь',
                 'хлебная печь (духовка)', 'помпейская печь (пицца-печь)',
                 'коптильня', 'мойка']
-
-        msg_text.group_d.focies[callback.message.chat.id] = msg_text.group_d.focies.get(callback.message.chat.id, []) + [callback.data.split('_')[-1]]
+        if callback.data.split('_')[-1] in msg_text.group_d.focies.get(callback.message.chat.id, []):
+            msg_text.group_d.focies[callback.message.chat.id].remove(callback.data.split('_')[-1])
+        else:
+            msg_text.group_d.focies[callback.message.chat.id] = msg_text.group_d.focies.get(callback.message.chat.id,
+                                                                                            []) + [
+                                                                    callback.data.split('_')[-1]]
         for foc in foci:
             if foc in msg_text.group_d.focies.get(callback.message.chat.id):
                 markup.add(types.InlineKeyboardButton(text=f'\u2705 {foc}', callback_data=f'D1_radio_{foc}'))
             else:
                 markup.add(types.InlineKeyboardButton(text=foc, callback_data=f'D1_radio_{foc}'))
-        text = callback.message.text.split(':')[-1]
-        if not text.strip():
-            text += callback.data.split('_')[-1] + '.'
-        elif callback.data.split('_')[-1] not in text.split('.')[0]:
-            text = text.split('.')[0] + ', ' + callback.data.split('_')[-1] + '.'
-        text = callback.message.text.split(':')[0] + ':' + text
+        text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(msg_text.group_d.focies[callback.message.chat.id])
 
         markup.add(types.InlineKeyboardButton(text='Выбор окончен', callback_data=f'D2'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -544,7 +584,7 @@ async def group_D(callback):
     elif 'd4' in callback.data:
         text = msg_text.group_d.d4()
         pol_txt = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Какова общая длина комплекса: {pol_txt} м.\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += f'Какова общая длина комплекса: {pol_txt}\n'
         markup.add(types.InlineKeyboardButton(text='аккуратная кирпичная кладка', callback_data='D6'))
         markup.add(types.InlineKeyboardButton(text='изразцы', callback_data='D_last_1__1'))
         markup.add(types.InlineKeyboardButton(text='другое', callback_data='D_last_1__2'))
@@ -584,23 +624,23 @@ async def group_E(callback):
                                     reply_markup=markup)
 
     elif 'radio' in callback.data:
-
-        msg_text.reg_user.list_of_polls[callback.message.chat.id]\
-            = msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []) + [callback.data.split('_')[-1]]
+        if callback.data.split('_')[-1] in msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []):
+            msg_text.reg_user.list_of_polls[callback.message.chat.id].remove(callback.data.split('_')[-1])
+        else:
+            msg_text.reg_user.list_of_polls[callback.message.chat.id]\
+                = msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []) + [callback.data.split('_')[-1]]
         stoves = ['Печь для отопления дома', 'Печь для бани',
                   'Камин', 'Комплекс барбекю', 'Другое']
         for stove in stoves:
             if stove in msg_text.reg_user.list_of_polls.get(callback.message.chat.id):
                 markup.add(types.InlineKeyboardButton(text=f'\u2705 {stove}', callback_data=f'E_radio_{stove}'))
+
             else:
                 markup.add(types.InlineKeyboardButton(text=stove, callback_data=f'E_radio_{stove}'))
-        text = callback.message.text.split(':')[-1]
-        if not text.strip():
-            text += callback.data.split('_')[-1] + '.'
-        elif callback.data.split('_')[-1] not in text.split('.')[0]:
 
-            text = text.split('.')[0] + ', ' + callback.data.split('_')[-1] + '.'
-        text = callback.message.text.split(':')[0] + ':' + text
+        text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(
+            msg_text.reg_user.list_of_polls[callback.message.chat.id])
+
         markup.add(types.InlineKeyboardButton(text='Выбор окончен', callback_data='E_last'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
@@ -640,9 +680,15 @@ async def group_last(callback):
             return
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                           f'Юзернейм: @{username}\n' \
-                                          f'Что интересует: Другое\n'
-    msg_text.reg_user.flag_for_last1[callback.message.chat.id] = True
-    if 'E' not in callback.data:
+                                          f'Что интересует: Нужна консультация печника'
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add(types.KeyboardButton(text='Далее'))
+
+        text = msg_text.reg_user.support()
+        msg_text.reg_user.flag_support[callback.message.chat.id] = True
+    if 'F' not in callback.data:
+        msg_text.reg_user.flag_for_last1[callback.message.chat.id] = True
+    if 'E' not in callback.data and 'F' not in callback.data:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Портфолио'))
         markup.add(types.KeyboardButton(text='Наш канал'))

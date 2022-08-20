@@ -14,6 +14,9 @@ class UserData:
         sql_query = f'SELECT username FROM {config.DB_TABLE} WHERE user_id = %s'
         cursor.execute(sql_query, (message.chat.id,))
         if cursor.fetchall():
+            sql_query = f'UPDATE {config.DB_TABLE} SET user_name = %s WHERE user_id = %s'
+            cursor.execute(sql_query, (name, message.chat.id))
+            conn.commit()
             return
         sql_query = f'INSERT INTO {config.DB_TABLE} (user_id, "username", user_name) VALUES (%s, %s, %s)'
         cursor.execute(sql_query, val)
