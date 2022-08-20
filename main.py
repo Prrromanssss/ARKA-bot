@@ -314,7 +314,7 @@ async def group_A(callback):
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'A2' in callback.data and 'A2_1' not in callback.data:
-
+        markup = types.InlineKeyboardMarkup(row_width=3)
         pol_txt = {'1': 'в одной', '2': 'в двух', '3': 'в трёх и более.'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Количество комнат: {pol_txt[callback.data.split("__")[-1]]}\n'
         for i in range(10):
@@ -322,11 +322,11 @@ async def group_A(callback):
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'A2_1' in callback.data:
-
+        markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'A2_1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Ввод окончен', callback_data='A3'))
+        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='A3'))
         square = square + callback.data.split('A2_1')[-1] if square != '0' else callback.data.split('A2_1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -411,10 +411,11 @@ async def group_B(callback):
                                     reply_markup=markup)
 
     elif 'B6_1' in callback.data:
+        markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'B6_1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Ввод окончен', callback_data='B6'))
+        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='B6'))
         square = square + callback.data.split('B6_1')[-1] if square != '0' else callback.data.split('B6_1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -455,17 +456,18 @@ async def group_C(callback):
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                               f'Юзернейм: @{username}\n' \
                                               f'Что интересует: Камин\n'
+        markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
 
     elif 'C1' in callback.data and len(callback.data) > 2:
-
+        markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Ввод окончен', callback_data='C2'))
+        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='C2'))
         square = square + callback.data.split('C1')[-1] if square != '0' else callback.data.split('C1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -474,16 +476,17 @@ async def group_C(callback):
         text = msg_text.group_c.c2()
         pol_text = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь помещения, где планируется разместить камин: {pol_text}\n'
-
+        markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C2{i}'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'C2' in callback.data and len(callback.data) > 2:
+        markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C2{i}'))
-        markup.add(types.InlineKeyboardButton(text='Ввод окончен', callback_data='C3'))
+        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='C3'))
         square = square + callback.data.split('C2')[-1] if square != '0' else callback.data.split('C2')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
@@ -568,15 +571,17 @@ async def group_D(callback):
         pol_txt = {'1': 'отдельная беседка', '2': 'веранда дома',
                    '3': 'веранда бани', '4': 'другое'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Место размещения комплекса: {pol_txt[callback.data.split("d3")[-1]]}\n'
+        markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'd5{i}'))
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
                                     reply_markup=markup)
     elif 'd5' in callback.data:
+        markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'd5{i}'))
-        markup.add(types.InlineKeyboardButton(text='Ввод окончен', callback_data='d4'))
+        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='d4'))
         square = square + callback.data.split('d5')[-1] if square != '0' else callback.data.split('d5')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
         await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
