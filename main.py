@@ -119,7 +119,7 @@ async def get_text_msg(message):
                 await bot.send_message(message.chat.id, text)
                 return
             text = msg_text.LastGroup().last_buy(name)
-            await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.polls.get(message.chat.id))
+            await bot.send_message(config.chat_to_poll['arka_pechnik'], msg_text.reg_user.polls.get(message.chat.id))
             await bot.send_message(chat_id=message.chat.id, text=text)
             del msg_text.reg_user.flag_support[message.chat.id]
             msg_text.reg_user.flag_support[message.chat.id] = True
@@ -148,7 +148,7 @@ async def get_text_msg(message):
         if not msg_text.reg_user.list_of_polls.get(message.chat.id):
             name = models.db_object.db_select_user(message)[1]
             text = msg_text.group_last.last_buy(name)
-            await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.main_pol.get(message.chat.id))
+            await bot.send_message(config.chat_to_poll['arka_pechnik'], msg_text.reg_user.main_pol.get(message.chat.id))
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add(types.KeyboardButton(text='Портфолио'))
             markup.add(types.KeyboardButton(text='Наш канал'))
@@ -178,7 +178,7 @@ async def get_text_msg(message):
             await bot.send_message(message.chat.id, text)
             return
         text = msg_text.group_last.last_buy(name)
-        await bot.send_message(config.chat_to_poll['sourr_cream'], msg_text.reg_user.polls.get(message.chat.id))
+        await bot.send_message(config.chat_to_poll['arka_pechnik'], msg_text.reg_user.polls.get(message.chat.id))
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Портфолио'))
