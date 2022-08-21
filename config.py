@@ -9,7 +9,7 @@ chat_to_poll = {
                 'arka_pechnik': 1952268541,
                 'sourr_cream': 1921020697
                 }
-DB_URI = 'postgres://bpwzeghxyxfjco:7c63485e6a581f0a6e0ea1f91f1e0b322d905ecf1bb53f19efa7bb227bdafbbf@ec2-176-34-215-248.eu-west-1.compute.amazonaws.com:5432/d5a1bjo3i9e4e8'
+DB_URI = 'postgres://auurowdysqtpnt:018bbd8554dc4d65c9f34e1f4841f325093c67ac1d560db5585e0e58df75e3d0@ec2-54-228-218-84.eu-west-1.compute.amazonaws.com:5432/dcubahrvtjirk6'
 DB_TABLE = 'db_usernames'
 admin_password = 'GfTR7654'
 CONTENT_TYPES = ['text', 'audio', 'document', 'photo',
