@@ -1,12 +1,13 @@
 import asyncio
-import settings
+
 import telebot.async_telebot
-import message as msg_text
 from telebot import types
+
+import message as msg_text
 import models
+import settings
 
-
-bot = telebot.async_telebot.AsyncTeleBot(settings.API_TOKEN)
+bot = telebot.async_telebot.AsyncTeleBot(settings.BOT_API_TOKEN)
 flags_for_names = {}
 msg_for_delete = {}
 
@@ -35,7 +36,7 @@ async def admin_command(message):
     except KeyError:
         pass
     try:
-        username, name = models.db_object.db_select_user(message)
+        models.db_object.db_select_user(message)
     except Exception:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(message.chat.id, text)
@@ -235,7 +236,7 @@ async def get_text_msg(message):
             message.chat.id,
             text,
             reply_markup=markup,
-            parse_mode='html'
+            parse_mode='html',
             )
         del msg_text.reg_user.flag_for_last2[message.chat.id]
 
@@ -259,7 +260,7 @@ async def get_text_msg(message):
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(
             text='Опросник',
-            callback_data='Questionnaire'
+            callback_data='Questionnaire',
             ))
         name = models.db_object.db_select_user(message)[-1]
         text = msg_text.reg_user.unknown(name)
@@ -274,7 +275,7 @@ async def newsletter(message):
             await bot.forward_message(
                 user[0],
                 message.chat.id,
-                message.message_id
+                message.message_id,
             )
 
 
@@ -283,8 +284,9 @@ async def channel(message):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(
         text='Перейти',
-        url=settings.CHANNEL_URL
-        ))
+        url=settings.CHANNEL_URL,
+        )
+    )
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
 
 
@@ -296,8 +298,9 @@ async def site(message):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(
         text='Перейти',
-        url=settings.SITE_URL)
+        url=settings.SITE_URL,
         )
+    )
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
 
 
@@ -307,8 +310,9 @@ async def portfolio(message):
     markup.add(types.InlineKeyboardButton(text='Печи', url=settings.STOVE_URL))
     markup.add(types.InlineKeyboardButton(
         text='Барбекю',
-        url=settings.BARBECUE_URL)
+        url=settings.BARBECUE_URL,
         )
+    )
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
 
 
@@ -316,7 +320,8 @@ async def contact(message):
     await bot.send_contact(
         chat_id=message.chat.id,
         phone_number='+79260539539',
-        first_name='Алексей', last_name='Мадянов'
+        first_name='Алексей',
+        last_name='Мадянов',
         )
 
 
@@ -331,46 +336,80 @@ async def products(message):
         await bot.send_message(message.chat.id, text, reply_markup=markup)
         return
     markup = types.InlineKeyboardMarkup(row_width=3)
-    if message.text == 'Далее' and not msg_text.reg_user.flag_support.get(message.chat.id):
-        text += f'\nВам осталось выбрать: {", ".join(msg_text.reg_user.list_of_polls.get(message.chat.id))}'
+    if (
+        message.text == 'Далее'
+        and not msg_text.reg_user.flag_support.get(message.chat.id)
+    ):
+        list_of_polls = (
+            ", ".join(msg_text.reg_user.list_of_polls.get(message.chat.id))
+            )
+        text += (
+            f'\nВам осталось выбрать: '
+            f'{list_of_polls }'
+            )
     markup.add(types.InlineKeyboardButton(
         text='Печь для отопления дома',
-        callback_data='A1'
-        ))
+        callback_data='A1',
+        )
+    )
     markup.add(types.InlineKeyboardButton(
         text='Печь для бани',
-        callback_data='B1'
-        ))
+        callback_data='B1',
+        )
+    )
     markup.add(types.InlineKeyboardButton(
         text='Камин',
-        callback_data='C1'
-        ))
+        callback_data='C1',
+        )
+    )
     markup.add(types.InlineKeyboardButton(
         text='Комплекс барбекю',
-        callback_data='D1'
-        ))
-    if message.text != 'Далее' or msg_text.reg_user.flag_support.get(message.chat.id):
-        markup.add(types.InlineKeyboardButton(text='Несколько печей', callback_data='E1'))
-        markup.add(types.InlineKeyboardButton(text='Нужна консультация печника', callback_data='F_last'))
+        callback_data='D1',
+        )
+    )
+    if (
+        message.text != 'Далее'
+        or msg_text.reg_user.flag_support.get(message.chat.id)
+    ):
+        markup.add(types.InlineKeyboardButton(
+            text='Несколько печей',
+            callback_data='E1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='Нужна консультация печника',
+            callback_data='F_last',
+            )
+        )
     else:
-        markup.add(types.InlineKeyboardButton(text='Другое', callback_data='F_last'))
+        markup.add(types.InlineKeyboardButton(
+            text='Другое',
+            callback_data='F_last',
+            )
+        )
     await bot.send_message(message.chat.id, text=text, reply_markup=markup)
     text = msg_text.reg_user.answers()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(types.KeyboardButton(text='Портфолио'))
     markup.add(types.KeyboardButton(text='Наш канал'))
     markup.add(types.KeyboardButton(text='Связаться с нами'))
-    markup.add(types.KeyboardButton(text=f'Наш сайт'))
+    markup.add(types.KeyboardButton(text='Наш сайт'))
     markup.add(types.KeyboardButton(text='<< Назад'))
-    msg = await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode='html')
+    msg = await bot.send_message(
+        message.chat.id,
+        text,
+        reply_markup=markup,
+        parse_mode='html',
+        )
     msg_for_delete[message.chat.id] = msg
-
 
 
 '''Callback handlers'''
 
 
-@bot.callback_query_handler(func=lambda callback: 'A' in callback.data and 'last' not in callback.data)
+@bot.callback_query_handler(
+    func=lambda callback: 'A' in callback.data and 'last' not in callback.data
+    )
 async def group_A(callback):
     text = eval(f'msg_text.group_a.{callback.data.lower().split("__")[0] if "__" in callback.data else callback.data.lower().split("_")[0]}()')
     markup = types.InlineKeyboardMarkup()
@@ -386,79 +425,211 @@ async def group_A(callback):
                                               f'Юзернейм: @{username}\n' \
                                               f'Что интересует: Печь для отопления дома\n'
 
-        markup.add(types.InlineKeyboardButton(text='одной', callback_data='A2__1'))
-        markup.add(types.InlineKeyboardButton(text='в двух', callback_data='A2__2'))
-        markup.add(types.InlineKeyboardButton(text='в трёх и более.', callback_data='A2__3'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='одной',
+            callback_data='A2__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='в двух',
+            callback_data='A2__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='в трёх и более.',
+            callback_data='A2__3',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A2' in callback.data and 'A2_1' not in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
         pol_txt = {'1': 'в одной', '2': 'в двух', '3': 'в трёх и более.'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Количество комнат: {pol_txt[callback.data.split("__")[-1]]}\n'
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'A2_1{i}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'A2_1{i}',
+                )
+            )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A2_1' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'A2_1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='A3'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'A2_1{i}',
+                )
+            )
+        markup.add(types.InlineKeyboardButton(
+            text='Продолжить',
+            callback_data='A3',
+            )
+        )
         square = square + callback.data.split('A2_1')[-1] if square != '0' else callback.data.split('A2_1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A3' in callback.data:
         pol_text = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь: {pol_text}\n'
-        markup.add(types.InlineKeyboardButton(text='отопление', callback_data='A4__1'))
-        markup.add(types.InlineKeyboardButton(text='с варочной плитой', callback_data='A4__2'))
-        markup.add(types.InlineKeyboardButton(text='с духовкой (хлебной камерой)', callback_data='A4__3'))
-        markup.add(types.InlineKeyboardButton(text='с варочной плитой и духовкой', callback_data='A4__4'))
-        markup.add(types.InlineKeyboardButton(text='с лежанкой', callback_data='A4__5'))
-        markup.add(types.InlineKeyboardButton(text='русская печь классическая', callback_data='A4__6'))
-        markup.add(types.InlineKeyboardButton(text='русская печь с подтопком', callback_data='A4__7'))
-        markup.add(types.InlineKeyboardButton(text='с пристроенным камином', callback_data='A4__8'))
-        markup.add(types.InlineKeyboardButton(text='каминопечь', callback_data='A4__9'))
-        markup.add(types.InlineKeyboardButton(text='пока не выбрали, посоветуйте.', callback_data='A4__10'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='отопление',
+            callback_data='A4__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='с варочной плитой',
+            callback_data='A4__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='с духовкой (хлебной камерой)',
+            callback_data='A4__3',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='с варочной плитой и духовкой',
+            callback_data='A4__4',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='с лежанкой',
+            callback_data='A4__5',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='русская печь классическая',
+            callback_data='A4__6',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='русская печь с подтопком',
+            callback_data='A4__7',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='с пристроенным камином',
+            callback_data='A4__8',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='каминопечь',
+            callback_data='A4__9',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='пока не выбрали, посоветуйте.',
+            callback_data='A4__10',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A4' in callback.data:
-        pol_txt = {'1': 'отопление', '2': 'с варочной плитой', '3': 'с духовкой (хлебной камерой)',
-                   '4': 'с варочной плитой и духовкой', '5': 'с лежанкой', '6': 'русская печь классическая',
-                   '7': 'русская печь с подтопком', '8': 'с пристроенным камином', '9': 'каминопечь',
-                   '10': 'пока не выбрали, посоветуйте.'}
+        pol_txt = {
+            '1': 'отопление', '2': 'с варочной плитой',
+            '3': 'с духовкой (хлебной камерой)',
+            '4': 'с варочной плитой и духовкой', '5': 'с лежанкой',
+            '6': 'русская печь классическая', '7': 'русская печь с подтопком',
+            '8': 'с пристроенным камином', '9': 'каминопечь',
+            '10': 'пока не выбрали, посоветуйте.'
+        }
         msg_text.reg_user.polls[callback.message.chat.id] += f'Вид и функционал: {pol_txt[callback.data.split("__")[-1]]}\n'
-        markup.add(types.InlineKeyboardButton(text='основной источник тепла, дом для постоянного проживания',
-                                              callback_data='A5__1'))
-        markup.add(types.InlineKeyboardButton(text='резервный источник тепла, дом для постоянного проживания',
-                                              callback_data='A5__2'))
-        markup.add(types.InlineKeyboardButton(text='это дача, жить постоянно здесь не планируем', callback_data='A5__3'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='основной источник тепла, дом для постоянного проживания',
+            callback_data='A5__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='резервный источник тепла, дом для постоянного проживания',
+            callback_data='A5__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='это дача, жить постоянно здесь не планируем',
+            callback_data='A5__3',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A5' in callback.data:
         pol_txt = {'1': 'основной источник тепла, дом для постоянного проживания',
                    '2': 'резервный источник тепла, дом для постоянного проживания',
                    '3': 'это дача, жить постоянно здесь не планируем'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Печь нужна как: {pol_txt[callback.data.split("__")[-1]]}\n'
-        markup.add(types.InlineKeyboardButton(text='да', callback_data='A6__1'))
-        markup.add(types.InlineKeyboardButton(text='пока нет, но строительство уже начато', callback_data='A6__2'))
-        markup.add(types.InlineKeyboardButton(text='нет, сейчас делаем проект.', callback_data='A6__3'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='да',
+            callback_data='A6__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='пока нет, но строительство уже начато',
+            callback_data='A6__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='нет, сейчас делаем проект.',
+            callback_data='A6__3',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'A6' in callback.data:
         pol_txt = {'1': 'да', '2': 'пока нет, но строительство уже начато', '3': 'нет, сейчас делаем проект.'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Дом уже построен: {pol_txt[callback.data.split("__")[-1]]}\n'
 
-        markup.add(types.InlineKeyboardButton(text='да', callback_data='A_last__1'))
-        markup.add(types.InlineKeyboardButton(text='нет', callback_data='A_last__2'))
-        markup.add(types.InlineKeyboardButton(text='нужна консультация печника', callback_data='A_last__3'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='да',
+            callback_data='A_last__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='нет',
+            callback_data='A_last__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='нужна консультация печника',
+            callback_data='A_last__3',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
 
 
-@bot.callback_query_handler(func=lambda callback: 'B' in callback.data and 'last' not in callback.data)
+@bot.callback_query_handler(
+    func=lambda callback: 'B' in callback.data and 'last' not in callback.data
+    )
 async def group_B(callback):
     markup = types.InlineKeyboardMarkup()
     if 'B1' in callback.data:
@@ -473,10 +644,14 @@ async def group_B(callback):
         msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
                                                             f'Юзернейм: @{username}\n' \
                                                             f'Что интересует: Печь для бани\n'
-        markup.add(types.InlineKeyboardButton(text=f'1', callback_data=f'B2'))
-        markup.add(types.InlineKeyboardButton(text=f'2', callback_data=f'B3'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(text='1', callback_data='B2'))
+        markup.add(types.InlineKeyboardButton(text='2', callback_data='B3'))
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup
+        )
     elif 'B2' in callback.data or 'B3' in callback.data:
         text = msg_text.group_b.b3()
         if callback.data == 'B2':
@@ -485,40 +660,90 @@ async def group_B(callback):
             msg_text.reg_user.polls[callback.message.chat.id] += f'Печь: Металлическая печь, совмещённая с отопительным щитком из кирпича \n'
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'B6_1{i}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+            )
 
     elif 'B6_1' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'B6_1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='B6'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'B6_1{i}',
+                )
+            )
+        markup.add(types.InlineKeyboardButton(
+            text='Продолжить',
+            callback_data='B6',
+            )
+        )
         square = square + callback.data.split('B6_1')[-1] if square != '0' else callback.data.split('B6_1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'B6' in callback.data and 'B6_1' not in callback.data:
         text = msg_text.group_b.b4()
         pol_text = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь помещения парной: {pol_text}\n'
-        markup.add(types.InlineKeyboardButton(text='бревно (брус)', callback_data='B7__1'))
-        markup.add(types.InlineKeyboardButton(text='кирпич', callback_data='B7__2'))
-        markup.add(types.InlineKeyboardButton(text='керамические блоки', callback_data='B7__3'))
-        markup.add(types.InlineKeyboardButton(text='газосиликатные блоки', callback_data='B7__4'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='бревно (брус)',
+            callback_data='B7__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='кирпич',
+            callback_data='B7__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='керамические блоки',
+            callback_data='B7__3',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='газосиликатные блоки',
+            callback_data='B7__4',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'B7' in callback.data:
         text = msg_text.group_b.b5()
         pol_txt = {'1': 'бревно (брус)', '2': 'кирпич', '3': 'керамические блоки', '4': 'газосиликатные блоки'}
         msg_text.reg_user.polls[callback.message.chat.id] += f'Из какого материала построена баня: {pol_txt[callback.data.split("__")[-1]]}\n'
-        markup.add(types.InlineKeyboardButton(text='да', callback_data='B_last__1'))
-        markup.add(types.InlineKeyboardButton(text='нет', callback_data='B_last__2'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='да',
+            callback_data='B_last__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='нет',
+            callback_data='B_last__2',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+            )
 
 
-@bot.callback_query_handler(func=lambda callback: 'C' in callback.data and 'last' not in callback.data)
+@bot.callback_query_handler(
+    func=lambda callback: 'C' in callback.data and 'last' not in callback.data
+    )
 async def group_C(callback):
 
     markup = types.InlineKeyboardMarkup()
@@ -531,59 +756,119 @@ async def group_C(callback):
             await bot.send_message(callback.message.chat.id, text)
             return
 
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                              f'Юзернейм: @{username}\n' \
-                                              f'Что интересует: Камин\n'
+        msg_text.reg_user.polls[callback.message.chat.id] = (
+            f'Пользователь: {name}\n'
+            f'Юзернейм: @{username}\n'
+            f'Что интересует: Камин\n'
+        )
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
 
     elif 'C1' in callback.data and len(callback.data) > 2:
         markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
-        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='C2'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'C1{i}',
+                )
+            )
+        markup.add(types.InlineKeyboardButton(
+            text='Продолжить',
+            callback_data='C2',
+            )
+        )
         square = square + callback.data.split('C1')[-1] if square != '0' else callback.data.split('C1')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'C2' in callback.data and len(callback.data) == 2:
         text = msg_text.group_c.c2()
         pol_text = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь помещения, где планируется разместить камин: {pol_text}\n'
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C2{i}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'C2{i}',
+                )
+            )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'C2' in callback.data and len(callback.data) > 2:
         markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C2{i}'))
-        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='C3'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'C2{i}',
+                )
+            )
+        markup.add(types.InlineKeyboardButton(
+            text='Продолжить',
+            callback_data='C3',
+            )
+        )
         square = square + callback.data.split('C2')[-1] if square != '0' else callback.data.split('C2')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'C3' in callback.data:
         text = msg_text.group_c.c3()
         pol_text = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Высота потолка в этом помещении: {pol_text}\n'
 
-        markup.add(types.InlineKeyboardButton(text='просто аккуратная кирпичная кладка', callback_data='C_last__1'))
-        markup.add(types.InlineKeyboardButton(text='изразцы', callback_data='C_last__2'))
-        markup.add(types.InlineKeyboardButton(text='камень', callback_data='C_last__3'))
-        markup.add(types.InlineKeyboardButton(text='пока выбираем, советуемся с дизайнером', callback_data='C_last__4'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='просто аккуратная кирпичная кладка',
+            callback_data='C_last__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='изразцы',
+            callback_data='C_last__2',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='камень',
+            callback_data='C_last__3',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='пока выбираем, советуемся с дизайнером',
+            callback_data='C_last__4',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+            )
 
 
-@bot.callback_query_handler(func=lambda callback: ('D' in callback.data and 'last' not in callback.data)
-                                                  or ('d' in callback.data and 'radio' not in callback.data))
+@bot.callback_query_handler(
+    func=lambda callback: ('D' in callback.data and 'last' not in callback.data)
+    or ('d' in callback.data and 'radio' not in callback.data)
+    )
 async def group_D(callback):
 
     markup = types.InlineKeyboardMarkup()
@@ -604,9 +889,17 @@ async def group_D(callback):
                 'хлебная печь (духовка)', 'помпейская печь (пицца-печь)',
                 'коптильня', 'мойка']
         for foc in foci:
-            markup.add(types.InlineKeyboardButton(text=foc, callback_data=f'D1_radio_{foc}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+            markup.add(types.InlineKeyboardButton(
+                text=foc,
+                callback_data=f'D1_radio_{foc}',
+                )
+            )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+            )
     elif 'radio' in callback.data:
 
         foci = ['мангал', 'печь казана', 'тандыр', 'русская печь',
@@ -620,14 +913,30 @@ async def group_D(callback):
                                                                     callback.data.split('_')[-1]]
         for foc in foci:
             if foc in msg_text.group_d.focies.get(callback.message.chat.id):
-                markup.add(types.InlineKeyboardButton(text=f'\u2705 {foc}', callback_data=f'D1_radio_{foc}'))
+                markup.add(types.InlineKeyboardButton(
+                    text=f'\u2705 {foc}',
+                    callback_data=f'D1_radio_{foc}',
+                    )
+                )
             else:
-                markup.add(types.InlineKeyboardButton(text=foc, callback_data=f'D1_radio_{foc}'))
+                markup.add(types.InlineKeyboardButton(
+                    text=foc,
+                    callback_data=f'D1_radio_{foc}',
+                    )
+                )
         text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(msg_text.group_d.focies[callback.message.chat.id])
 
-        markup.add(types.InlineKeyboardButton(text='Выбор окончен', callback_data=f'D2'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='Выбор окончен',
+            callback_data='D2',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'D2' in callback.data:
         text = msg_text.group_d.d2()
         pol_text = ', '.join(msg_text.group_d.focies.get(callback.message.chat.id))
@@ -637,12 +946,32 @@ async def group_D(callback):
             pass
         msg_text.reg_user.polls[callback.message.chat.id] += f'Какие очаги и элементы Вы выбираете: {pol_text}\n'
 
-        markup.add(types.InlineKeyboardButton(text='отдельная беседка', callback_data='d31'))
-        markup.add(types.InlineKeyboardButton(text='веранда дома', callback_data='d32'))
-        markup.add(types.InlineKeyboardButton(text='веранда бани', callback_data='d33'))
-        markup.add(types.InlineKeyboardButton(text='другое', callback_data='d34'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='отдельная беседка',
+            callback_data='d31',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='веранда дома',
+            callback_data='d32',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='веранда бани',
+            callback_data='d33',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='другое',
+            callback_data='d34',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'd3' in callback.data:
         text = msg_text.group_d.d3()
 
@@ -652,42 +981,80 @@ async def group_D(callback):
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'd5{i}'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'd5' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
         square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'd5{i}'))
-        markup.add(types.InlineKeyboardButton(text='Продолжить', callback_data='d4'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'd5{i}'
+                )
+            )
+        markup.add(types.InlineKeyboardButton(
+            text='Продолжить',
+            callback_data='d4',
+        ))
         square = square + callback.data.split('d5')[-1] if square != '0' else callback.data.split('d5')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'd4' in callback.data:
         text = msg_text.group_d.d4()
         pol_txt = callback.message.text.split(':')[-1]
         msg_text.reg_user.polls[callback.message.chat.id] += f'Какова общая длина комплекса: {pol_txt}\n'
-        markup.add(types.InlineKeyboardButton(text='аккуратная кирпичная кладка', callback_data='D6'))
-        markup.add(types.InlineKeyboardButton(text='изразцы', callback_data='D_last_1__1'))
-        markup.add(types.InlineKeyboardButton(text='другое', callback_data='D_last_1__2'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='аккуратная кирпичная кладка',
+            callback_data='D6',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='изразцы',
+            callback_data='D_last_1__1',
+            )
+        )
+        markup.add(types.InlineKeyboardButton(
+            text='другое',
+            callback_data='D_last_1__2',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
     elif 'D6' in callback.data:
         text = msg_text.group_d.d6()
         msg_text.reg_user.polls[callback.message.chat.id] += f'Варианты отделки: аккуратная кирпичная кладка\n'
 
-        markup.add(types.InlineKeyboardButton(text='стандартный кирпич с гладкой поверхностью (красный, коричневый, бежевый)',
-                                              callback_data='D_last_2__1'))
+        markup.add(types.InlineKeyboardButton(
+            text='стандартный кирпич с гладкой поверхностью (красный, коричневый, бежевый)',
+            callback_data='D_last_2__1',
+            )
+        )
         markup.add(types.InlineKeyboardButton(text='кирпич ручной формовки уменьшенного формата.', callback_data='D_last_2__2'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
 
 
 @bot.callback_query_handler(func=lambda callback: 'E' in callback.data and 'last' not in callback.data)
 async def group_E(callback):
     try:
-        username, name = models.db_object.db_select_user(callback.message)
+        models.db_object.db_select_user(callback.message)
     except:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(callback.message.chat.id, text)
@@ -697,14 +1064,16 @@ async def group_E(callback):
     msg_text.reg_user.flag_for_list_polls[callback.message.chat.id] = True
 
     if 'E1' in callback.data:
-
         stoves = ['Печь для отопления дома', 'Печь для бани', 'Камин',
                   'Комплекс барбекю', 'Другое']
         for stove in stoves:
             markup.add(types.InlineKeyboardButton(text=stove, callback_data=f'E_radio_{stove}'))
 
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id, text=text,
+            reply_markup=markup,
+        )
 
     elif 'radio' in callback.data:
         if callback.data.split('_')[-1] in msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []):
@@ -716,17 +1085,33 @@ async def group_E(callback):
                   'Камин', 'Комплекс барбекю', 'Другое']
         for stove in stoves:
             if stove in msg_text.reg_user.list_of_polls.get(callback.message.chat.id):
-                markup.add(types.InlineKeyboardButton(text=f'\u2705 {stove}', callback_data=f'E_radio_{stove}'))
+                markup.add(types.InlineKeyboardButton(
+                    text=f'\u2705 {stove}',
+                    callback_data=f'E_radio_{stove}',
+                    )
+                )
 
             else:
-                markup.add(types.InlineKeyboardButton(text=stove, callback_data=f'E_radio_{stove}'))
+                markup.add(types.InlineKeyboardButton(
+                    text=stove,
+                    callback_data=f'E_radio_{stove}',
+                    )
+                )
 
         text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(
             msg_text.reg_user.list_of_polls[callback.message.chat.id])
 
-        markup.add(types.InlineKeyboardButton(text='Выбор окончен', callback_data='E_last'))
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text=text,
-                                    reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(
+            text='Выбор окончен',
+            callback_data='E_last',
+            )
+        )
+        await bot.edit_message_text(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.id,
+            text=text,
+            reply_markup=markup,
+        )
 
 
 @bot.callback_query_handler(func=lambda callback: 'last' in callback.data)
@@ -761,9 +1146,11 @@ async def group_last(callback):
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                          f'Юзернейм: @{username}\n' \
-                                          f'Что интересует: Нужна консультация печника'
+        msg_text.reg_user.polls[callback.message.chat.id] = (
+            f'Пользователь: {name}\n'
+            f'Юзернейм: @{username}\n'
+            f'Что интересует: Нужна консультация печника'
+        )
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Далее'))
 
@@ -776,22 +1163,36 @@ async def group_last(callback):
         markup.add(types.KeyboardButton(text='Портфолио'))
         markup.add(types.KeyboardButton(text='Наш канал'))
         markup.add(types.KeyboardButton(text='Связаться с нами'))
-        markup.add(types.KeyboardButton(text=f'Наш сайт'))
+        markup.add(types.KeyboardButton(text='Наш сайт'))
         markup.add(types.KeyboardButton(text='<< Назад'))
 
-    await bot.delete_message(chat_id=msg_for_delete[callback.message.chat.id].chat.id,
-                             message_id=msg_for_delete[callback.message.chat.id].id)
+    await bot.delete_message(
+        chat_id=msg_for_delete[callback.message.chat.id].chat.id,
+        message_id=msg_for_delete[callback.message.chat.id].id,
+    )
     try:
         del msg_for_delete[callback.message.chat.id]
     except KeyError:
         pass
-    await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.id)
-    await bot.send_message(chat_id=callback.message.chat.id, text=text, reply_markup=markup, parse_mode='html')
+    await bot.delete_message(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.id,
+    )
+    await bot.send_message(
+        chat_id=callback.message.chat.id,
+        text=text, reply_markup=markup,
+        parse_mode='html',
+    )
 
 
-@bot.callback_query_handler(func=lambda callback: callback.data == 'Questionnaire')
+@bot.callback_query_handler(
+    func=lambda callback: callback.data == 'Questionnaire'
+    )
 async def init_questionnaire(callback):
-    await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.id)
+    await bot.delete_message(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.id,
+        )
     await products(callback.message)
 
 

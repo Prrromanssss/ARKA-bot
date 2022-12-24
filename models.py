@@ -1,5 +1,9 @@
 import sqlite3
+
 import settings
+
+
+DB_TABLE = 'db_usernames'
 
 
 class UserData:
@@ -11,14 +15,26 @@ class UserData:
         cursor = conn.cursor()
         username = message.from_user.username
         val = (message.chat.id, username, name)
-        sql_query = f'SELECT username FROM {settings.DB_TABLE} WHERE user_id = ?'
+        sql_query = f'''SELECT
+                           username
+                        FROM {DB_TABLE}
+                        WHERE user_id = ?
+                     '''
         cursor.execute(sql_query, (message.chat.id,))
         if cursor.fetchall():
-            sql_query = f'UPDATE {settings.DB_TABLE} SET user_name = ? WHERE user_id = ?'
+            sql_query = f'''UPDATE
+                                {DB_TABLE}
+                            SET user_name = ?
+                            WHERE user_id = ?
+                         '''
             cursor.execute(sql_query, (name, message.chat.id))
             conn.commit()
             return
-        sql_query = f'INSERT INTO {settings.DB_TABLE} (user_id, "username", user_name) VALUES (?, ?, ?)'
+        sql_query = f'''INSERT INTO
+                            {DB_TABLE}
+                        (user_id, "username", user_name)
+                        VALUES (?, ?, ?)
+                     '''
         cursor.execute(sql_query, val)
         conn.commit()
 
@@ -26,10 +42,18 @@ class UserData:
         conn = sqlite3.connect(self.name)
         cursor = conn.cursor()
         val = (message.chat.id, )
-        sql_query = f'SELECT "user_name" FROM {settings.DB_TABLE} WHERE user_id = ?'
+        sql_query = f'''SELECT
+                            "user_name"
+                        FROM {DB_TABLE}
+                        WHERE user_id = ?
+                     '''
         cursor.execute(sql_query, val)
         user_name = cursor.fetchall()[0][0]
-        sql_query = f'SELECT "username" FROM {settings.DB_TABLE} WHERE user_id = ?'
+        sql_query = f'''SELECT
+                            "username"
+                        FROM {DB_TABLE}
+                        WHERE user_id = ?
+                     '''
         cursor.execute(sql_query, val)
         username = cursor.fetchall()[0][0]
         conn.commit()
@@ -38,7 +62,10 @@ class UserData:
     def db_select_all_users_id(self):
         conn = sqlite3.connect(self.name)
         cursor = conn.cursor()
-        sql_query = f'SELECT "user_id" FROM {settings.DB_TABLE}'
+        sql_query = f'''SELECT
+                            "user_id"
+                        FROM {DB_TABLE}
+                     '''
         cursor.execute(sql_query)
         users_id = cursor.fetchall()
         conn.commit()
