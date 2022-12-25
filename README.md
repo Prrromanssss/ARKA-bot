@@ -7,9 +7,6 @@
 ## Contens
 * [About](#about)
 * [Functional](#functional)
-  * [Tasks](#tasks)
-  * [Notifications](#notifications)
-  * [Stickers](#stickers)
 * [Deployment instructions](#deployment-instructions)
   * [Cloning project](#1-cloning-project-from-github)
   * [Activation venv](#2-creation-and-activation-venv)
