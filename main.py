@@ -1,4 +1,5 @@
 import asyncio
+import sqlite3
 
 import telebot.async_telebot
 from telebot import types
@@ -8,7 +9,9 @@ import models
 import settings
 
 bot = telebot.async_telebot.AsyncTeleBot(settings.BOT_API_TOKEN)
+
 flags_for_names = {}
+
 msg_for_delete = {}
 
 
@@ -411,19 +414,29 @@ async def products(message):
     func=lambda callback: 'A' in callback.data and 'last' not in callback.data
     )
 async def group_A(callback):
-    text = eval(f'msg_text.group_a.{callback.data.lower().split("__")[0] if "__" in callback.data else callback.data.lower().split("_")[0]}()')
+
+    if "__" in callback.data:
+        text = eval(
+            f'msg_text.group_a.{callback.data.lower().split("__")[0]}()'
+        )
+    else:
+        text = eval(
+            f'msg_text.group_a.{callback.data.lower().split("_")[0]}()'
+        )
     markup = types.InlineKeyboardMarkup()
     if 'A1' in callback.data:
         try:
             username, name = models.db_object.db_select_user(callback.message)
-        except:
+        except sqlite3.Error:
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
 
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                              f'Юзернейм: @{username}\n' \
-                                              f'Что интересует: Печь для отопления дома\n'
+        msg_text.reg_user.polls[callback.message.chat.id] = (
+            f'Пользователь: {name}\n'
+            f'Юзернейм: @{username}\n'
+            f'Что интересует: Печь для отопления дома\n'
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='одной',
@@ -449,7 +462,9 @@ async def group_A(callback):
     elif 'A2' in callback.data and 'A2_1' not in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
         pol_txt = {'1': 'в одной', '2': 'в двух', '3': 'в трёх и более.'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Количество комнат: {pol_txt[callback.data.split("__")[-1]]}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Количество комнат: {pol_txt[callback.data.split("__")[-1]]}\n'
+        )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -464,7 +479,10 @@ async def group_A(callback):
         )
     elif 'A2_1' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
-        square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
+        square = (
+            ''.join(callback.message.text.split(':')[-1]).split('кв')[0]
+            .strip()
+            )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -476,8 +494,13 @@ async def group_A(callback):
             callback_data='A3',
             )
         )
-        square = square + callback.data.split('A2_1')[-1] if square != '0' else callback.data.split('A2_1')[-1]
-        text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        if square != '0':
+            square = square + callback.data.split('A2_1')[-1]
+        else:
+            square = callback.data.split('A2_1')[-1]
+        text = (
+            ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -486,7 +509,9 @@ async def group_A(callback):
         )
     elif 'A3' in callback.data:
         pol_text = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь: {pol_text}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Площадь: {pol_text}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='отопление',
             callback_data='A4__1',
@@ -552,7 +577,9 @@ async def group_A(callback):
             '8': 'с пристроенным камином', '9': 'каминопечь',
             '10': 'пока не выбрали, посоветуйте.'
         }
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Вид и функционал: {pol_txt[callback.data.split("__")[-1]]}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Вид и функционал: {pol_txt[callback.data.split("__")[-1]]}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='основной источник тепла, дом для постоянного проживания',
             callback_data='A5__1',
@@ -575,10 +602,14 @@ async def group_A(callback):
             reply_markup=markup,
         )
     elif 'A5' in callback.data:
-        pol_txt = {'1': 'основной источник тепла, дом для постоянного проживания',
-                   '2': 'резервный источник тепла, дом для постоянного проживания',
-                   '3': 'это дача, жить постоянно здесь не планируем'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Печь нужна как: {pol_txt[callback.data.split("__")[-1]]}\n'
+        pol_txt = {
+            '1': 'основной источник тепла, дом для постоянного проживания',
+            '2': 'резервный источник тепла, дом для постоянного проживания',
+            '3': 'это дача, жить постоянно здесь не планируем'
+        }
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Печь нужна как: {pol_txt[callback.data.split("__")[-1]]}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='да',
             callback_data='A6__1',
@@ -601,8 +632,14 @@ async def group_A(callback):
             reply_markup=markup,
         )
     elif 'A6' in callback.data:
-        pol_txt = {'1': 'да', '2': 'пока нет, но строительство уже начато', '3': 'нет, сейчас делаем проект.'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Дом уже построен: {pol_txt[callback.data.split("__")[-1]]}\n'
+        pol_txt = {
+            '1': 'да',
+            '2': 'пока нет, но строительство уже начато',
+            '3': 'нет, сейчас делаем проект.'
+        }
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Дом уже построен: {pol_txt[callback.data.split("__")[-1]]}\n'
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='да',
@@ -636,30 +673,42 @@ async def group_B(callback):
         text = msg_text.group_b.b1()
         try:
             username, name = models.db_object.db_select_user(callback.message)
-        except:
+        except sqlite3.Error:
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
 
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                                            f'Юзернейм: @{username}\n' \
-                                                            f'Что интересует: Печь для бани\n'
+        msg_text.reg_user.polls[callback.message.chat.id] = (
+            f'Пользователь: {name}\n'
+            f'Юзернейм: @{username}\n'
+            f'Что интересует: Печь для бани\n'
+        )
         markup.add(types.InlineKeyboardButton(text='1', callback_data='B2'))
         markup.add(types.InlineKeyboardButton(text='2', callback_data='B3'))
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
             text=text,
-            reply_markup=markup
+            reply_markup=markup,
         )
     elif 'B2' in callback.data or 'B3' in callback.data:
         text = msg_text.group_b.b3()
         if callback.data == 'B2':
-            msg_text.reg_user.polls[callback.message.chat.id] += f'Печь: Кирпичная печь-каменка с закладкой из чугуна – классика русской бани. \n'
+            msg_text.reg_user.polls[callback.message.chat.id] += (
+                'Печь: Кирпичная печь-каменка с закладкой из чугуна – '
+                'классика русской бани. \n'
+            )
         elif callback.data == 'B3':
-            msg_text.reg_user.polls[callback.message.chat.id] += f'Печь: Металлическая печь, совмещённая с отопительным щитком из кирпича \n'
+            msg_text.reg_user.polls[callback.message.chat.id] += (
+                'Печь: Металлическая печь, совмещённая с отопительным щитком '
+                'из кирпича \n'
+            )
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'B6_1{i}'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'B6_1{i}',
+                )
+            )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -669,7 +718,10 @@ async def group_B(callback):
 
     elif 'B6_1' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
-        square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
+        square = (
+            ''.join(callback.message.text.split(':')[-1]).split('кв')[0]
+            .strip()
+        )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -681,8 +733,13 @@ async def group_B(callback):
             callback_data='B6',
             )
         )
-        square = square + callback.data.split('B6_1')[-1] if square != '0' else callback.data.split('B6_1')[-1]
-        text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        if square != '0':
+            square += callback.data.split('B6_1')[-1]
+        else:
+            square = callback.data.split('B6_1')[-1]
+        text = (
+            ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -692,7 +749,9 @@ async def group_B(callback):
     elif 'B6' in callback.data and 'B6_1' not in callback.data:
         text = msg_text.group_b.b4()
         pol_text = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь помещения парной: {pol_text}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Площадь помещения парной: {pol_text}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='бревно (брус)',
             callback_data='B7__1',
@@ -721,8 +780,16 @@ async def group_B(callback):
         )
     elif 'B7' in callback.data:
         text = msg_text.group_b.b5()
-        pol_txt = {'1': 'бревно (брус)', '2': 'кирпич', '3': 'керамические блоки', '4': 'газосиликатные блоки'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Из какого материала построена баня: {pol_txt[callback.data.split("__")[-1]]}\n'
+        pol_txt = {
+            '1': 'бревно (брус)',
+            '2': 'кирпич',
+            '3': 'керамические блоки',
+            '4': 'газосиликатные блоки'
+        }
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Из какого материала построена баня: '
+            f'{pol_txt[callback.data.split("__")[-1]]}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='да',
             callback_data='B_last__1',
@@ -751,7 +818,7 @@ async def group_C(callback):
         text = msg_text.group_c.c1()
         try:
             username, name = models.db_object.db_select_user(callback.message)
-        except:
+        except sqlite3.Error:
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
@@ -763,7 +830,11 @@ async def group_C(callback):
         )
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'C1{i}'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'C1{i}',
+                )
+            )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -773,7 +844,10 @@ async def group_C(callback):
 
     elif 'C1' in callback.data and len(callback.data) > 2:
         markup = types.InlineKeyboardMarkup(row_width=3)
-        square = ''.join(callback.message.text.split(':')[-1]).split('кв')[0].strip()
+        square = (
+            ''.join(callback.message.text.split(':')[-1]).split('кв')[0]
+            .strip()
+        )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -785,8 +859,13 @@ async def group_C(callback):
             callback_data='C2',
             )
         )
-        square = square + callback.data.split('C1')[-1] if square != '0' else callback.data.split('C1')[-1]
-        text = ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        if square != '0':
+            square = square + callback.data.split('C1')[-1]
+        else:
+            square = callback.data.split('C1')[-1]
+        text = (
+            ''.join(callback.message.text.split(':')[0]) + f': {square} кв. м.'
+        )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -796,7 +875,10 @@ async def group_C(callback):
     elif 'C2' in callback.data and len(callback.data) == 2:
         text = msg_text.group_c.c2()
         pol_text = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Площадь помещения, где планируется разместить камин: {pol_text}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Площадь помещения, где планируется разместить камин: '
+            f'{pol_text}\n'
+        )
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
@@ -812,7 +894,9 @@ async def group_C(callback):
         )
     elif 'C2' in callback.data and len(callback.data) > 2:
         markup = types.InlineKeyboardMarkup(row_width=3)
-        square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
+        square = (
+            ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
+            )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -824,7 +908,10 @@ async def group_C(callback):
             callback_data='C3',
             )
         )
-        square = square + callback.data.split('C2')[-1] if square != '0' else callback.data.split('C2')[-1]
+        if square != '0':
+            square += callback.data.split('C2')[-1]
+        else:
+            square = callback.data.split('C2')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
@@ -835,7 +922,9 @@ async def group_C(callback):
     elif 'C3' in callback.data:
         text = msg_text.group_c.c3()
         pol_text = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Высота потолка в этом помещении: {pol_text}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Высота потолка в этом помещении: {pol_text}\n'
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='просто аккуратная кирпичная кладка',
@@ -866,8 +955,12 @@ async def group_C(callback):
 
 
 @bot.callback_query_handler(
-    func=lambda callback: ('D' in callback.data and 'last' not in callback.data)
-    or ('d' in callback.data and 'radio' not in callback.data)
+    func=lambda callback: (
+        'D' in callback.data and 'last' not in callback.data
+    )
+    or (
+        'd' in callback.data and 'radio' not in callback.data
+    )
     )
 async def group_D(callback):
 
@@ -877,17 +970,21 @@ async def group_D(callback):
         text = msg_text.group_d.d1()
         try:
             username, name = models.db_object.db_select_user(callback.message)
-        except:
+        except sqlite3.Error:
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
 
-        msg_text.reg_user.polls[callback.message.chat.id] = f'Пользователь: {name}\n' \
-                                          f'Юзернейм: @{username}\n' \
-                                          f'Что интересует: Комплекс барбекю\n'
-        foci = ['мангал', 'печь казана', 'тандыр', 'русская печь',
-                'хлебная печь (духовка)', 'помпейская печь (пицца-печь)',
-                'коптильня', 'мойка']
+        msg_text.reg_user.polls[callback.message.chat.id] = (
+            f'Пользователь: {name}\n'
+            f'Юзернейм: @{username}\n'
+            f'Что интересует: Комплекс барбекю\n'
+        )
+        foci = [
+            'мангал', 'печь казана', 'тандыр',
+            'русская печь', 'хлебная печь (духовка)',
+            'помпейская печь (пицца-печь)', 'коптильня', 'мойка',
+        ]
         for foc in foci:
             markup.add(types.InlineKeyboardButton(
                 text=foc,
@@ -902,15 +999,22 @@ async def group_D(callback):
             )
     elif 'radio' in callback.data:
 
-        foci = ['мангал', 'печь казана', 'тандыр', 'русская печь',
-                'хлебная печь (духовка)', 'помпейская печь (пицца-печь)',
-                'коптильня', 'мойка']
-        if callback.data.split('_')[-1] in msg_text.group_d.focies.get(callback.message.chat.id, []):
-            msg_text.group_d.focies[callback.message.chat.id].remove(callback.data.split('_')[-1])
+        foci = [
+            'мангал', 'печь казана', 'тандыр',
+            'русская печь', 'хлебная печь (духовка)',
+            'помпейская печь (пицца-печь)', 'коптильня', 'мойка'
+        ]
+        if callback.data.split('_')[-1] in msg_text.group_d.focies.get(
+            callback.message.chat.id, [],
+        ):
+            msg_text.group_d.focies[callback.message.chat.id].remove(
+                callback.data.split('_')[-1],
+            )
         else:
-            msg_text.group_d.focies[callback.message.chat.id] = msg_text.group_d.focies.get(callback.message.chat.id,
-                                                                                            []) + [
-                                                                    callback.data.split('_')[-1]]
+            msg_text.group_d.focies[callback.message.chat.id] = (
+                msg_text.group_d.focies.get(callback.message.chat.id, [])
+                + [callback.data.split('_')[-1]]
+            )
         for foc in foci:
             if foc in msg_text.group_d.focies.get(callback.message.chat.id):
                 markup.add(types.InlineKeyboardButton(
@@ -924,7 +1028,11 @@ async def group_D(callback):
                     callback_data=f'D1_radio_{foc}',
                     )
                 )
-        text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(msg_text.group_d.focies[callback.message.chat.id])
+        text = (
+            ':'.join(callback.message.text.split(':')[:-1])
+            + ': '
+            + ', '.join(msg_text.group_d.focies[callback.message.chat.id])
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='Выбор окончен',
@@ -939,12 +1047,16 @@ async def group_D(callback):
         )
     elif 'D2' in callback.data:
         text = msg_text.group_d.d2()
-        pol_text = ', '.join(msg_text.group_d.focies.get(callback.message.chat.id))
+        pol_text = ', '.join(msg_text.group_d.focies.get(
+            callback.message.chat.id,
+            ))
         try:
             del msg_text.group_d.focies[callback.message.chat.id]
         except KeyError:
             pass
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Какие очаги и элементы Вы выбираете: {pol_text}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Какие очаги и элементы Вы выбираете: {pol_text}\n'
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='отдельная беседка',
@@ -977,10 +1089,17 @@ async def group_D(callback):
 
         pol_txt = {'1': 'отдельная беседка', '2': 'веранда дома',
                    '3': 'веранда бани', '4': 'другое'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Место размещения комплекса: {pol_txt[callback.data.split("d3")[-1]]}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Место размещения комплекса: '
+            f'{pol_txt[callback.data.split("d3")[-1]]}\n'
+        )
         markup = types.InlineKeyboardMarkup(row_width=3)
         for i in range(10):
-            markup.add(types.InlineKeyboardButton(text=f'{i}', callback_data=f'd5{i}'))
+            markup.add(types.InlineKeyboardButton(
+                text=f'{i}',
+                callback_data=f'd5{i}',
+                )
+            )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -989,7 +1108,9 @@ async def group_D(callback):
         )
     elif 'd5' in callback.data:
         markup = types.InlineKeyboardMarkup(row_width=3)
-        square = ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
+        square = (
+            ''.join(callback.message.text.split(':')[-1]).split('м')[0].strip()
+        )
         for i in range(10):
             markup.add(types.InlineKeyboardButton(
                 text=f'{i}',
@@ -1000,7 +1121,10 @@ async def group_D(callback):
             text='Продолжить',
             callback_data='d4',
         ))
-        square = square + callback.data.split('d5')[-1] if square != '0' else callback.data.split('d5')[-1]
+        if square != '0':
+            square = square + callback.data.split('d5')[-1]
+        else:
+            square = callback.data.split('d5')[-1]
         text = ''.join(callback.message.text.split(':')[0]) + f': {square} м.'
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
@@ -1011,7 +1135,9 @@ async def group_D(callback):
     elif 'd4' in callback.data:
         text = msg_text.group_d.d4()
         pol_txt = callback.message.text.split(':')[-1]
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Какова общая длина комплекса: {pol_txt}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Какова общая длина комплекса: {pol_txt}\n'
+        )
         markup.add(types.InlineKeyboardButton(
             text='аккуратная кирпичная кладка',
             callback_data='D6',
@@ -1035,14 +1161,21 @@ async def group_D(callback):
         )
     elif 'D6' in callback.data:
         text = msg_text.group_d.d6()
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Варианты отделки: аккуратная кирпичная кладка\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            'Варианты отделки: аккуратная кирпичная кладка\n'
+        )
 
         markup.add(types.InlineKeyboardButton(
-            text='стандартный кирпич с гладкой поверхностью (красный, коричневый, бежевый)',
+            text='стандартный кирпич с гладкой поверхностью '
+            '(красный, коричневый, бежевый)',
             callback_data='D_last_2__1',
             )
         )
-        markup.add(types.InlineKeyboardButton(text='кирпич ручной формовки уменьшенного формата.', callback_data='D_last_2__2'))
+        markup.add(types.InlineKeyboardButton(
+            text='кирпич ручной формовки уменьшенного формата.',
+            callback_data='D_last_2__2',
+            )
+        )
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
             message_id=callback.message.id,
@@ -1051,15 +1184,22 @@ async def group_D(callback):
         )
 
 
-@bot.callback_query_handler(func=lambda callback: 'E' in callback.data and 'last' not in callback.data)
+@bot.callback_query_handler(
+    func=lambda callback: 'E' in callback.data and 'last' not in callback.data
+    )
 async def group_E(callback):
     try:
         models.db_object.db_select_user(callback.message)
-    except:
+    except sqlite3.Error:
         text = msg_text.reg_user.forgot_user()
         await bot.send_message(callback.message.chat.id, text)
         return
-    text = eval(f'msg_text.group_e.{callback.data.lower().split("_")[-1]}()') if 'radio' not in callback.data else msg_text.group_e.e1()
+    if 'radio' not in callback.data:
+        text = eval(
+            f'msg_text.group_e.{callback.data.lower().split("_")[-1]}()'
+        )
+    else:
+        text = msg_text.group_e.e1()
     markup = types.InlineKeyboardMarkup()
     msg_text.reg_user.flag_for_list_polls[callback.message.chat.id] = True
 
@@ -1067,7 +1207,11 @@ async def group_E(callback):
         stoves = ['Печь для отопления дома', 'Печь для бани', 'Камин',
                   'Комплекс барбекю', 'Другое']
         for stove in stoves:
-            markup.add(types.InlineKeyboardButton(text=stove, callback_data=f'E_radio_{stove}'))
+            markup.add(types.InlineKeyboardButton(
+                text=stove,
+                callback_data=f'E_radio_{stove}',
+                )
+            )
 
         await bot.edit_message_text(
             chat_id=callback.message.chat.id,
@@ -1076,15 +1220,30 @@ async def group_E(callback):
         )
 
     elif 'radio' in callback.data:
-        if callback.data.split('_')[-1] in msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []):
-            msg_text.reg_user.list_of_polls[callback.message.chat.id].remove(callback.data.split('_')[-1])
+        if callback.data.split('_')[-1] in msg_text.reg_user.list_of_polls.get(
+            callback.message.chat.id, [],
+        ):
+            msg_text.reg_user.list_of_polls[callback.message.chat.id].remove(
+                callback.data.split('_')[-1]
+            )
         else:
-            msg_text.reg_user.list_of_polls[callback.message.chat.id]\
-                = msg_text.reg_user.list_of_polls.get(callback.message.chat.id, []) + [callback.data.split('_')[-1]]
-        stoves = ['Печь для отопления дома', 'Печь для бани',
-                  'Камин', 'Комплекс барбекю', 'Другое']
+            msg_text.reg_user.list_of_polls[callback.message.chat.id] = (
+                msg_text.reg_user.list_of_polls.get(
+                    callback.message.chat.id,
+                    []
+                ) + [callback.data.split('_')[-1]]
+            )
+        stoves = [
+            'Печь для отопления дома',
+            'Печь для бани',
+            'Камин',
+            'Комплекс барбекю',
+            'Другое',
+        ]
         for stove in stoves:
-            if stove in msg_text.reg_user.list_of_polls.get(callback.message.chat.id):
+            if stove in msg_text.reg_user.list_of_polls.get(
+                callback.message.chat.id
+            ):
                 markup.add(types.InlineKeyboardButton(
                     text=f'\u2705 {stove}',
                     callback_data=f'E_radio_{stove}',
@@ -1098,8 +1257,12 @@ async def group_E(callback):
                     )
                 )
 
-        text = ':'.join(callback.message.text.split(':')[:-1]) + ': ' + ', '.join(
-            msg_text.reg_user.list_of_polls[callback.message.chat.id])
+        text = (
+            ':'.join(callback.message.text.split(':')[:-1])
+            + ': '
+            + ', '.join(msg_text.
+                        reg_user.list_of_polls[callback.message.chat.id])
+        )
 
         markup.add(types.InlineKeyboardButton(
             text='Выбор окончен',
@@ -1119,30 +1282,54 @@ async def group_last(callback):
     text = msg_text.group_last.last_1()
     if 'A' in callback.data:
         pol_txt = {'1': 'да', '2': 'нет', '3': 'нужна консультация печника'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Сделан ли фундамент для печи: {pol_txt[callback.data.split("__")[-1]]}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Сделан ли фундамент для печи: '
+            f'{pol_txt[callback.data.split("__")[-1]]}\n'
+        )
     elif 'B' in callback.data:
         pol_txt = {'1': 'да', '2': 'нет'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Сделан ли фундамент для печи?: {pol_txt[callback.data.split("__")[-1]]}\n'
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Сделан ли фундамент для печи?: '
+            f'{pol_txt[callback.data.split("__")[-1]]}\n'
+        )
     elif 'C' in callback.data:
-        pol_txt = {'1': 'просто аккуратная кирпичная кладка', '2': 'изразцы',
-                   '3': 'камень', '4': 'пока выбираем, советуемся с дизайнером'}
-        msg_text.reg_user.polls[callback.message.chat.id] += f'Варианты отделки камина: {pol_txt[callback.data.split("__")[-1]]}\n'
+        pol_txt = {
+            '1': 'просто аккуратная кирпичная кладка',
+            '2': 'изразцы',
+            '3': 'камень', '4': 'пока выбираем, советуемся с дизайнером',
+        }
+        msg_text.reg_user.polls[callback.message.chat.id] += (
+            f'Варианты отделки камина: '
+            f'{pol_txt[callback.data.split("__")[-1]]}\n'
+        )
     elif 'D' in callback.data:
         if '1' in callback.data:
             pol_txt = {'1': 'изразцы', '2': 'другое'}
-            msg_text.reg_user.polls[callback.message.chat.id] += f'Варианты отделки: {pol_txt[callback.data.split("__")[-1]]}\n'
+            msg_text.reg_user.polls[callback.message.chat.id] += (
+                f'Варианты отделки: '
+                f'{pol_txt[callback.data.split("__")[-1]]}\n'
+            )
         elif '2' in callback.data:
-            pol_txt = {'1': 'стандартный кирпич с гладкой поверхностью (красный, коричневый, бежевый)',
-                       '2': 'кирпич ручной формовки уменьшенного формата.'}
-            msg_text.reg_user.polls[callback.message.chat.id] += f'Варианты кирпичной кладки: {pol_txt[callback.data.split("__")[-1]]}\n'
+            pol_txt = {
+                '1': 'стандартный кирпич с гладкой поверхностью '
+                '(красный, коричневый, бежевый)',
+                '2': 'кирпич ручной формовки уменьшенного формата.'
+            }
+            msg_text.reg_user.polls[callback.message.chat.id] += (
+                f'Варианты кирпичной кладки: '
+                f'{pol_txt[callback.data.split("__")[-1]]}\n'
+            )
     elif 'E' in callback.data:
-        text = 'Начните заполнять заказы\nНажмите кнопку "Далее", для того тобы начать'
+        text = (
+            'Начните заполнять заказы\nНажмите кнопку "Далее", '
+            'для того тобы начать'
+        )
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton(text='Далее'))
     elif 'F' in callback.data:
         try:
             username, name = models.db_object.db_select_user(callback.message)
-        except:
+        except sqlite3.Error:
             text = msg_text.reg_user.forgot_user()
             await bot.send_message(callback.message.chat.id, text)
             return
@@ -1197,12 +1384,14 @@ async def init_questionnaire(callback):
 
 
 async def main():
-    await asyncio.gather(bot.polling(
-                                    interval=1,
-                                    non_stop=True,
-                                    request_timeout=1000,
-                                    timeout=1000
-                                    ))
+    await asyncio.gather(
+        bot.polling(
+                    interval=1,
+                    non_stop=True,
+                    request_timeout=1000,
+                    timeout=1000
+                    )
+                    )
 
 
 if __name__ == '__main__':
