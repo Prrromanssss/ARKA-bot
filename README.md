@@ -5,8 +5,6 @@
 
 
 ## Contens
-* [About](#about)
-* [Functional](#functional)
 * [Deployment instructions](#deployment-instructions)
   * [Cloning project](#1-cloning-project-from-github)
   * [Activation venv](#2-creation-and-activation-venv)
@@ -17,13 +15,6 @@
 * [Examples](#examples)
 
 
-
-
-## About
-
-
-
-## Functional
 
 ## Deployment instructions
 
